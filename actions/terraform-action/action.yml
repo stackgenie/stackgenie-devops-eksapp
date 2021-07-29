@@ -1,0 +1,7 @@
+name: "AWS CLI"
+description: "AWS CLI - Github action"
+author: "team-stackgenie"
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
+

@@ -1,0 +1,5 @@
+domainFilters:
+  - DOMAIN_NAME
+serviceAccount:
+  annotations:
+    eks.amazonaws.com/role-arn: DNS_ARN

@@ -1,0 +1,75 @@
+## GitHub Action
+
+name: AWS Infra Provision
+
+on:
+  push:
+    branches:
+    - <replace-with-your-branch>
+  pull_request:
+    branches:
+    - <replace-with-branch-accordingly>
+
+jobs:
+  eks-flux:
+    # Use the Bash shell regardless whether the GitHub Actions runner is ubuntu-latest, macos-latest, or windows-latest
+    defaults:
+      run:
+        shell: bash
+
+    name: 'AWS EKS Deployments'
+    runs-on: ubuntu-latest
+    env:
+
+      ## Workspace Variable used for all steps
+      ## Input values are 'dev or mgmt or prod'
+      WORKSPACE_ENV: ''
+
+      ## Terraform Variables 
+      ## Input values are 'apply or destroy'         
+      TF_VERBOSE: ''
+
+      ## ArgoCD installation to EKS Cluster, bootstrap parameters.
+      ##
+      ARGO_VERBOSE: ''               # Allowed values are 'install or uninstall'
+      DOMAIN_NAME: ''                # Route53 domain for hosted zone
+      ARGO_HOSTNAME: ''              # Hostname with domain FQDN eg: argocd.example.com.
+
+      ## Web-App installation to EKS Cluster, bootstrap parameters.
+      ##
+      WEBAPP_VERBOSE: ''             # Allowed values are 'install or uninstall' , Null (" ") to skip the process.
+      WEBAPP_HOSTNAME: ''            # Hostname with domain FQDN eg: web-app.example.com.
+
+      ## AWS Parameters
+      AWS_DEFAULT_REGION: 'eu-west-1'  
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_KEY }}
+      ASSUME_ROLES: ${{ secrets.ASSUME_ROLES }}
+
+      ## GITHUB TOKEN
+      API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
+      USER_GITHUB: ${{ secrets.USER_GITHUB }}
+
+    steps:
+    ## Checkout the repository to the GitHub Actions runner
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    ## Terraform Execution using GitHub Docker Container Action https://docs.github.com/en/actions/creating-actions/creating-a-docker-container-action  
+    - name: Terraform Execution
+      if: ${{ env.TF_VERBOSE != '' }}
+      uses: ./actions/terraform-action
+
+    ## ArgoCD bootstrap using GitHub Docker Container Action https://docs.github.com/en/actions/creating-actions/creating-a-docker-container-action   
+    - name: ArgoCD Bootstrap
+      if: ${{ env.ARGO_VERBOSE != '' && env.TF_VERBOSE != 'destroy' }}
+      uses: ./actions/argo-action
+      
+    ## WebApp bootstrap using GitHub Docker Container Action https://docs.github.com/en/actions/creating-actions/creating-a-docker-container-action 
+    - name: WebApp Bootstrap
+      if: ${{ env.WEBAPP_VERBOSE != '' && env.TF_VERBOSE != 'destroy' }}
+      uses: ./actions/web-app-action
+
+
+#### END ####
+
